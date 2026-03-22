@@ -1,0 +1,2 @@
+CREATE POLICY "Allow authenticated delete on students" ON public.students FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Allow authenticated delete on teachers" ON public.teachers FOR DELETE TO authenticated USING (true);
