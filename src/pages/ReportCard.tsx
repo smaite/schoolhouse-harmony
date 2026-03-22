@@ -230,9 +230,9 @@ export default function ReportCard() {
                   <div style={{ fontSize: 14, fontWeight: 700, color: "#1a365d", borderBottom: "2px solid #1a365d", paddingBottom: 4, marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 }}>Fee Summary</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                     {[
-                      { num: `$${totalFees.toLocaleString()}`, lbl: "Total Fees" },
-                      { num: `$${totalPaid.toLocaleString()}`, lbl: "Paid" },
-                      { num: `$${balance.toLocaleString()}`, lbl: "Balance" },
+                      { num: `रू ${totalFees.toLocaleString()}`, lbl: "Total Fees" },
+                      { num: `रू ${totalPaid.toLocaleString()}`, lbl: "Paid" },
+                      { num: `रू ${balance.toLocaleString()}`, lbl: "Balance" },
                     ].map((b) => (
                       <div key={b.lbl} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 12, textAlign: "center" }}>
                         <div style={{ fontSize: 22, fontWeight: 700, color: b.lbl === "Balance" && balance > 0 ? "#dc2626" : "#1a365d" }}>{b.num}</div>
