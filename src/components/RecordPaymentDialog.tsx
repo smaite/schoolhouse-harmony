@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
-const feeTypes = ["Tuition", "Lab Fee", "Sports Fee", "Library Fee", "Transport Fee", "Other"];
+const defaultFeeTypes = ["Tuition", "Lab Fee", "Sports Fee", "Library Fee", "Transport Fee"];
 
-export function RecordPaymentDialog() {
+export function RecordPaymentDialog({ customFeeTypes = [] }: { customFeeTypes?: string[] }) {
   const [open, setOpen] = useState(false);
   const [studentId, setStudentId] = useState("");
   const [feeType, setFeeType] = useState("Tuition");
@@ -19,6 +19,9 @@ export function RecordPaymentDialog() {
   const [paid, setPaid] = useState("");
   const [dueDate, setDueDate] = useState("");
   const queryClient = useQueryClient();
+
+  // Merge default + custom fee types, deduplicated
+  const allFeeTypes = [...new Set([...defaultFeeTypes, ...customFeeTypes])];
 
   const { data: students = [] } = useQuery({
     queryKey: ["students-list"],
@@ -81,17 +84,17 @@ export function RecordPaymentDialog() {
             <Select value={feeType} onValueChange={setFeeType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {feeTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                {allFeeTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Amount *</Label>
+              <Label>Amount (NPR) *</Label>
               <Input type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} required placeholder="0.00" />
             </div>
             <div className="space-y-2">
-              <Label>Paid</Label>
+              <Label>Paid (NPR)</Label>
               <Input type="number" step="0.01" min="0" value={paid} onChange={(e) => setPaid(e.target.value)} placeholder="0.00" />
             </div>
           </div>

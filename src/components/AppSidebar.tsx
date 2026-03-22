@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, GraduationCap, ClipboardCheck, BookOpen, School,
   Calendar, MessageSquare, Settings, ChevronLeft, CreditCard, ShieldCheck,
-  DollarSign, CreditCard as IdCard, Bus, FileText,
+  DollarSign, CreditCard as IdCard, Bus, FileText, LibraryBig,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ const navItems = [
   { label: "Students", icon: Users, path: "/students" },
   { label: "Teachers", icon: GraduationCap, path: "/teachers" },
   { label: "Classes", icon: School, path: "/classes" },
+  { label: "Subjects", icon: LibraryBig, path: "/subjects" },
   { label: "Attendance", icon: ClipboardCheck, path: "/attendance" },
   { label: "Gradebook", icon: BookOpen, path: "/gradebook" },
   { label: "Schedule", icon: Calendar, path: "/schedule" },
