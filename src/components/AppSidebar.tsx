@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, GraduationCap, ClipboardCheck, BookOpen, School,
   Calendar, MessageSquare, Settings, ChevronLeft, CreditCard, ShieldCheck,
-  DollarSign, CreditCard as IdCard, Bus,
+  DollarSign, CreditCard as IdCard, Bus, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
