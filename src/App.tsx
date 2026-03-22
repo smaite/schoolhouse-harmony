@@ -49,39 +49,45 @@ function AuthRoute() {
   return <Auth />;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<AuthRoute />} />
-            <Route element={<ProtectedRoutes />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/students" element={<Students />} />
-              <Route path="/teachers" element={<Teachers />} />
-              <Route path="/classes" element={<Classes />} />
-              <Route path="/subjects" element={<Subjects />} />
-              <Route path="/attendance" element={<Attendance />} />
-              <Route path="/gradebook" element={<Gradebook />} />
-              <Route path="/schedule" element={<Schedule />} />
-              <Route path="/fees" element={<Fees />} />
-              <Route path="/salaries" element={<Salaries />} />
-              <Route path="/announcements" element={<Announcements />} />
-              <Route path="/id-cards" element={<IDCards />} />
-              <Route path="/report-card" element={<ReportCard />} />
-              <Route path="/bus" element={<BusManagement />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/admin" element={<AdminOnlyRoute><AdminPanel /></AdminOnlyRoute>} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/auth" element={<AuthRoute />} />
+              <Route element={<ProtectedRoutes />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/students" element={<Students />} />
+                <Route path="/teachers" element={<Teachers />} />
+                <Route path="/classes" element={<Classes />} />
+                <Route path="/subjects" element={<Subjects />} />
+                <Route path="/attendance" element={<Attendance />} />
+                <Route path="/gradebook" element={<Gradebook />} />
+                <Route path="/schedule" element={<Schedule />} />
+                <Route path="/fees" element={<Fees />} />
+                <Route path="/salaries" element={<Salaries />} />
+                <Route path="/announcements" element={<Announcements />} />
+                <Route path="/id-cards" element={<IDCards />} />
+                <Route path="/report-card" element={<ReportCard />} />
+                <Route path="/bus" element={<BusManagement />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/admin" element={<AdminOnlyRoute><AdminPanel /></AdminOnlyRoute>} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

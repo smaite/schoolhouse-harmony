@@ -3,13 +3,16 @@ import { useAuth } from "@/contexts/AuthContext";
 export function usePermissions() {
   const { isAdmin, roles } = useAuth();
   const isTeacher = roles.includes("teacher");
+  // If user has no roles assigned yet, grant full access (first user / setup scenario)
+  const hasNoRoles = roles.length === 0;
+  const hasFullAccess = isAdmin || hasNoRoles;
 
   return {
-    isAdmin,
+    isAdmin: hasFullAccess,
     isTeacher,
-    canEdit: isAdmin,
-    canDelete: isAdmin,
-    canCreate: isAdmin,
-    viewOnly: isTeacher && !isAdmin,
+    canEdit: hasFullAccess,
+    canDelete: hasFullAccess,
+    canCreate: hasFullAccess,
+    viewOnly: isTeacher && !isAdmin && !hasNoRoles,
   };
 }
