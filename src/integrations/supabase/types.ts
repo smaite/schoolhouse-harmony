@@ -89,6 +89,132 @@ export type Database = {
           },
         ]
       }
+      bus_assignments: {
+        Row: {
+          bus_id: string
+          created_at: string
+          dropoff_stop: string | null
+          id: string
+          pickup_stop: string | null
+          student_id: string
+        }
+        Insert: {
+          bus_id: string
+          created_at?: string
+          dropoff_stop?: string | null
+          id?: string
+          pickup_stop?: string | null
+          student_id: string
+        }
+        Update: {
+          bus_id?: string
+          created_at?: string
+          dropoff_stop?: string | null
+          id?: string
+          pickup_stop?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_assignments_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bus_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bus_sign_ins: {
+        Row: {
+          bus_id: string
+          created_at: string
+          date: string
+          id: string
+          sign_in_time: string | null
+          sign_out_time: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          bus_id: string
+          created_at?: string
+          date?: string
+          id?: string
+          sign_in_time?: string | null
+          sign_out_time?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          bus_id?: string
+          created_at?: string
+          date?: string
+          id?: string
+          sign_in_time?: string | null
+          sign_out_time?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_sign_ins_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bus_sign_ins_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buses: {
+        Row: {
+          bus_number: string
+          capacity: number
+          created_at: string
+          driver_name: string
+          driver_phone: string | null
+          id: string
+          route_name: string
+          route_stops: string[]
+          status: string
+        }
+        Insert: {
+          bus_number: string
+          capacity?: number
+          created_at?: string
+          driver_name: string
+          driver_phone?: string | null
+          id?: string
+          route_name: string
+          route_stops?: string[]
+          status?: string
+        }
+        Update: {
+          bus_number?: string
+          capacity?: number
+          created_at?: string
+          driver_name?: string
+          driver_phone?: string | null
+          id?: string
+          route_name?: string
+          route_stops?: string[]
+          status?: string
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           created_at: string
@@ -349,6 +475,56 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teacher_salaries: {
+        Row: {
+          base_salary: number
+          bonus: number
+          created_at: string
+          deductions: number
+          id: string
+          month: string
+          net_salary: number | null
+          paid_date: string | null
+          status: string
+          teacher_id: string
+          year: number
+        }
+        Insert: {
+          base_salary?: number
+          bonus?: number
+          created_at?: string
+          deductions?: number
+          id?: string
+          month: string
+          net_salary?: number | null
+          paid_date?: string | null
+          status?: string
+          teacher_id: string
+          year: number
+        }
+        Update: {
+          base_salary?: number
+          bonus?: number
+          created_at?: string
+          deductions?: number
+          id?: string
+          month?: string
+          net_salary?: number | null
+          paid_date?: string | null
+          status?: string
+          teacher_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_salaries_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
