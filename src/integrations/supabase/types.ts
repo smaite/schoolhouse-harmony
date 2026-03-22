@@ -89,6 +89,47 @@ export type Database = {
           },
         ]
       }
+      books: {
+        Row: {
+          author: string | null
+          created_at: string
+          edition: string | null
+          id: string
+          isbn: string | null
+          publisher: string | null
+          subject_id: string
+          title: string
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          edition?: string | null
+          id?: string
+          isbn?: string | null
+          publisher?: string | null
+          subject_id: string
+          title: string
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          edition?: string | null
+          id?: string
+          isbn?: string | null
+          publisher?: string | null
+          subject_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bus_assignments: {
         Row: {
           bus_id: string
@@ -214,6 +255,38 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      class_fee_templates: {
+        Row: {
+          amount: number
+          class_id: string
+          created_at: string
+          fee_type: string
+          id: string
+        }
+        Insert: {
+          amount?: number
+          class_id: string
+          created_at?: string
+          fee_type: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          class_id?: string
+          created_at?: string
+          fee_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_fee_templates_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       classes: {
         Row: {
@@ -423,6 +496,24 @@ export type Database = {
           },
         ]
       }
+      school_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           address: string | null
@@ -499,6 +590,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_class_id_fkey"
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
