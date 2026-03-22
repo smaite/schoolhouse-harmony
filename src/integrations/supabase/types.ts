@@ -559,13 +559,24 @@ export type Database = {
       teachers: {
         Row: {
           avatar_url: string | null
+          blood_group: string | null
+          category: string | null
           created_at: string
+          current_address: string | null
+          date_of_birth: string | null
           department: string
           email: string
+          father_name: string | null
           first_name: string
+          gender: string | null
           id: string
           join_date: string
           last_name: string
+          marital_status: string | null
+          mother_tongue: string | null
+          nationality: string | null
+          pan_number: string | null
+          permanent_address: string | null
           phone: string | null
           qualification: string | null
           status: string
@@ -573,13 +584,24 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          blood_group?: string | null
+          category?: string | null
           created_at?: string
+          current_address?: string | null
+          date_of_birth?: string | null
           department?: string
           email: string
+          father_name?: string | null
           first_name: string
+          gender?: string | null
           id?: string
           join_date?: string
           last_name: string
+          marital_status?: string | null
+          mother_tongue?: string | null
+          nationality?: string | null
+          pan_number?: string | null
+          permanent_address?: string | null
           phone?: string | null
           qualification?: string | null
           status?: string
@@ -587,13 +609,24 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          blood_group?: string | null
+          category?: string | null
           created_at?: string
+          current_address?: string | null
+          date_of_birth?: string | null
           department?: string
           email?: string
+          father_name?: string | null
           first_name?: string
+          gender?: string | null
           id?: string
           join_date?: string
           last_name?: string
+          marital_status?: string | null
+          mother_tongue?: string | null
+          nationality?: string | null
+          pan_number?: string | null
+          permanent_address?: string | null
           phone?: string | null
           qualification?: string | null
           status?: string

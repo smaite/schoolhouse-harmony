@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DollarSign, Plus, TrendingUp, Clock, CheckCircle } from "lucide-react";
+import { Banknote, Plus, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -18,6 +17,10 @@ const statusColors: Record<string, string> = {
   Pending: "bg-warning/10 text-warning",
   Partial: "bg-muted text-muted-foreground",
 };
+
+function formatNPR(amount: number) {
+  return `रू ${amount.toLocaleString("en-NP")}`;
+}
 
 export default function Salaries() {
   const [open, setOpen] = useState(false);
@@ -136,16 +139,16 @@ export default function Salaries() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Base Salary *</Label>
+                <Label>Base Salary (NPR) *</Label>
                 <Input type="number" step="0.01" value={baseSalary} onChange={e => setBaseSalary(e.target.value)} required placeholder="0.00" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label>Bonus</Label>
+                  <Label>Bonus (NPR)</Label>
                   <Input type="number" step="0.01" value={bonus} onChange={e => setBonus(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Deductions</Label>
+                  <Label>Deductions (NPR)</Label>
                   <Input type="number" step="0.01" value={deductions} onChange={e => setDeductions(e.target.value)} />
                 </div>
               </div>
@@ -158,8 +161,8 @@ export default function Salaries() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Total Paid" value={`$${totalPaid.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-success" />} iconBg="bg-success/10" change="This period" changeType="positive" />
-        <StatCard title="Pending Amount" value={`$${totalPending.toLocaleString()}`} icon={<Clock className="h-5 w-5 text-warning" />} iconBg="bg-warning/10" change={`${pendingCount} records`} changeType="negative" />
+        <StatCard title="Total Paid" value={formatNPR(totalPaid)} icon={<Banknote className="h-5 w-5 text-success" />} iconBg="bg-success/10" change="This period" changeType="positive" />
+        <StatCard title="Pending Amount" value={formatNPR(totalPending)} icon={<Clock className="h-5 w-5 text-warning" />} iconBg="bg-warning/10" change={`${pendingCount} records`} changeType="negative" />
         <StatCard title="Total Records" value={salaries.length.toString()} icon={<TrendingUp className="h-5 w-5 text-primary" />} iconBg="bg-primary/10" change="All time" changeType="positive" />
       </div>
 
@@ -207,10 +210,10 @@ export default function Salaries() {
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{name}</TableCell>
                     <TableCell>{s.month} {s.year}</TableCell>
-                    <TableCell className="text-right">${Number(s.base_salary).toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${Number(s.bonus).toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${Number(s.deductions).toLocaleString()}</TableCell>
-                    <TableCell className="text-right font-semibold">${Number(s.net_salary).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{formatNPR(Number(s.base_salary))}</TableCell>
+                    <TableCell className="text-right">{formatNPR(Number(s.bonus))}</TableCell>
+                    <TableCell className="text-right">{formatNPR(Number(s.deductions))}</TableCell>
+                    <TableCell className="text-right font-semibold">{formatNPR(Number(s.net_salary))}</TableCell>
                     <TableCell>
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusColors[s.status] ?? ""}`}>{s.status}</span>
                     </TableCell>
