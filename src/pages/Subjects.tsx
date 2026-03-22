@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Subjects() {
-  const { isAdmin } = useAuth();
+  const { isAdmin } = usePermissions();
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState("");
   const [classId, setClassId] = useState("");
