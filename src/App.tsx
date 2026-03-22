@@ -15,7 +15,10 @@ import Attendance from "@/pages/Attendance";
 import Gradebook from "@/pages/Gradebook";
 import Schedule from "@/pages/Schedule";
 import Fees from "@/pages/Fees";
+import Salaries from "@/pages/Salaries";
 import Announcements from "@/pages/Announcements";
+import IDCards from "@/pages/IDCards";
+import BusManagement from "@/pages/BusManagement";
 import Settings from "@/pages/Settings";
 import AdminPanel from "@/pages/AdminPanel";
 import NotFound from "./pages/NotFound.tsx";
@@ -61,16 +64,12 @@ const App = () => (
               <Route path="/gradebook" element={<Gradebook />} />
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/fees" element={<Fees />} />
+              <Route path="/salaries" element={<Salaries />} />
               <Route path="/announcements" element={<Announcements />} />
+              <Route path="/id-cards" element={<IDCards />} />
+              <Route path="/bus" element={<BusManagement />} />
               <Route path="/settings" element={<Settings />} />
-              <Route
-                path="/admin"
-                element={(
-                  <AdminOnlyRoute>
-                    <AdminPanel />
-                  </AdminOnlyRoute>
-                )}
-              />
+              <Route path="/admin" element={<AdminOnlyRoute><AdminPanel /></AdminOnlyRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
