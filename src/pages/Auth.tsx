@@ -57,9 +57,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground text-2xl font-bold mb-4">
-            S
-          </div>
+          <img src={logoImg} alt="Schoolers" className="h-16 w-16 mx-auto mb-4 object-contain" />
           <h1 className="text-2xl font-bold">Schoolers</h1>
           <p className="text-sm text-muted-foreground mt-1">by Radium Tech</p>
         </div>
