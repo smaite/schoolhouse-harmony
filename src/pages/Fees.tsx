@@ -1,20 +1,9 @@
-import { CreditCard, DollarSign, AlertCircle, CheckCircle2, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { CreditCard, DollarSign, AlertCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/StatCard";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-
-const feesData = [
-  { id: 1, student: "Alex Johnson", class: "Grade 10-A", type: "Tuition", amount: 2500, paid: 2500, status: "Paid", date: "2026-01-15" },
-  { id: 2, student: "Maria Garcia", class: "Grade 9-B", type: "Tuition", amount: 2500, paid: 1500, status: "Partial", date: "2026-01-20" },
-  { id: 3, student: "Chen Wei", class: "Grade 11-A", type: "Lab Fee", amount: 350, paid: 0, status: "Unpaid", date: "-" },
-  { id: 4, student: "Sarah Kim", class: "Grade 10-B", type: "Tuition", amount: 2500, paid: 2500, status: "Paid", date: "2026-02-01" },
-  { id: 5, student: "James Brown", class: "Grade 12-A", type: "Activity", amount: 200, paid: 200, status: "Paid", date: "2026-01-10" },
-  { id: 6, student: "Priya Patel", class: "Grade 9-A", type: "Tuition", amount: 2500, paid: 0, status: "Overdue", date: "-" },
-  { id: 7, student: "Liam O'Brien", class: "Grade 11-B", type: "Library", amount: 100, paid: 100, status: "Paid", date: "2026-02-05" },
-];
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const statusVariant: Record<string, string> = {
   Paid: "bg-success/10 text-success",
@@ -24,9 +13,21 @@ const statusVariant: Record<string, string> = {
 };
 
 export default function Fees() {
-  const totalCollected = feesData.reduce((s, f) => s + f.paid, 0);
-  const totalPending = feesData.reduce((s, f) => s + (f.amount - f.paid), 0);
-  const overdueCount = feesData.filter((f) => f.status === "Overdue").length;
+  const { data: fees = [], isLoading } = useQuery({
+    queryKey: ["fees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("fees")
+        .select("*, students(first_name, last_name, classes(name))")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const totalCollected = fees.reduce((s, f) => s + Number(f.paid), 0);
+  const totalPending = fees.reduce((s, f) => s + (Number(f.amount) - Number(f.paid)), 0);
+  const overdueCount = fees.filter((f) => f.status === "Overdue").length;
 
   return (
     <div className="space-y-6">
@@ -39,43 +40,52 @@ export default function Fees() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Total Collected" value={`$${totalCollected.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-success" />} iconBg="bg-success/10" change="+12% from last month" changeType="positive" />
-        <StatCard title="Pending Amount" value={`$${totalPending.toLocaleString()}`} icon={<CreditCard className="h-5 w-5 text-warning" />} iconBg="bg-warning/10" change="5 invoices pending" changeType="negative" />
+        <StatCard title="Total Collected" value={`$${totalCollected.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-success" />} iconBg="bg-success/10" change="Live data" changeType="positive" />
+        <StatCard title="Pending Amount" value={`$${totalPending.toLocaleString()}`} icon={<CreditCard className="h-5 w-5 text-warning" />} iconBg="bg-warning/10" change={`${fees.filter(f => f.status !== "Paid").length} invoices`} changeType="negative" />
         <StatCard title="Overdue Invoices" value={overdueCount.toString()} icon={<AlertCircle className="h-5 w-5 text-destructive" />} iconBg="bg-destructive/10" change="Needs attention" changeType="negative" />
       </div>
 
-      <div className="rounded-xl border bg-card shadow-sm">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Fee Type</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-right">Paid</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {feesData.map((fee) => (
-              <TableRow key={fee.id}>
-                <TableCell className="font-medium">{fee.student}</TableCell>
-                <TableCell>{fee.class}</TableCell>
-                <TableCell>{fee.type}</TableCell>
-                <TableCell className="text-right">${fee.amount}</TableCell>
-                <TableCell className="text-right">${fee.paid}</TableCell>
-                <TableCell>
-                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusVariant[fee.status]}`}>
-                    {fee.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{fee.date}</TableCell>
+      {isLoading ? (
+        <div className="text-center py-10 text-muted-foreground">Loading fees...</div>
+      ) : (
+        <div className="rounded-xl border bg-card shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student</TableHead>
+                <TableHead>Class</TableHead>
+                <TableHead>Fee Type</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="text-right">Paid</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Due Date</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {fees.map((fee) => {
+                const student = fee.students as any;
+                const name = student ? `${student.first_name} ${student.last_name}` : "—";
+                const className = student?.classes?.name ?? "—";
+                return (
+                  <TableRow key={fee.id}>
+                    <TableCell className="font-medium">{name}</TableCell>
+                    <TableCell>{className}</TableCell>
+                    <TableCell>{fee.fee_type}</TableCell>
+                    <TableCell className="text-right">${Number(fee.amount).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">${Number(fee.paid).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusVariant[fee.status] ?? ""}`}>
+                        {fee.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{fee.due_date ?? "—"}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

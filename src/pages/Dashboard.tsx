@@ -1,36 +1,16 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Users,
   GraduationCap,
   School,
   ClipboardCheck,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  BookOpen,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line,
 } from "recharts";
-
-const attendanceData = [
-  { day: "Mon", present: 92, absent: 8 },
-  { day: "Tue", present: 88, absent: 12 },
-  { day: "Wed", present: 95, absent: 5 },
-  { day: "Thu", present: 90, absent: 10 },
-  { day: "Fri", present: 85, absent: 15 },
-];
 
 const gradeDistribution = [
   { name: "A", value: 35, color: "hsl(172, 66%, 35%)" },
@@ -49,14 +29,6 @@ const enrollmentTrend = [
   { month: "Feb", students: 1248 },
 ];
 
-const recentActivities = [
-  { text: "New student enrolled: Sarah Johnson", time: "2 min ago", type: "success" },
-  { text: "Attendance report generated for Grade 10", time: "15 min ago", type: "info" },
-  { text: "Fee payment received: $1,200", time: "1 hour ago", type: "success" },
-  { text: "Parent meeting scheduled for March 25", time: "2 hours ago", type: "warning" },
-  { text: "Teacher John Smith on leave tomorrow", time: "3 hours ago", type: "destructive" },
-];
-
 const upcomingEvents = [
   { name: "Parent-Teacher Meeting", date: "Mar 25", type: "Meeting" },
   { name: "Science Fair", date: "Mar 28", type: "Event" },
@@ -65,58 +37,79 @@ const upcomingEvents = [
 ];
 
 export default function Dashboard() {
+  const { data: studentCount = 0 } = useQuery({
+    queryKey: ["dashboard-students"],
+    queryFn: async () => {
+      const { count } = await supabase.from("students").select("*", { count: "exact", head: true });
+      return count ?? 0;
+    },
+  });
+
+  const { data: teacherCount = 0 } = useQuery({
+    queryKey: ["dashboard-teachers"],
+    queryFn: async () => {
+      const { count } = await supabase.from("teachers").select("*", { count: "exact", head: true });
+      return count ?? 0;
+    },
+  });
+
+  const { data: classCount = 0 } = useQuery({
+    queryKey: ["dashboard-classes"],
+    queryFn: async () => {
+      const { count } = await supabase.from("classes").select("*", { count: "exact", head: true });
+      return count ?? 0;
+    },
+  });
+
+  const { data: attendanceRate = "0%" } = useQuery({
+    queryKey: ["dashboard-attendance"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase.from("attendance").select("status").eq("date", today);
+      if (!data || data.length === 0) return "N/A";
+      const present = data.filter((a) => a.status === "Present" || a.status === "Late").length;
+      return ((present / data.length) * 100).toFixed(1) + "%";
+    },
+  });
+
+  const { data: weeklyAttendance = [] } = useQuery({
+    queryKey: ["dashboard-weekly-attendance"],
+    queryFn: async () => {
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const today = new Date();
+      const result = [];
+      for (let i = 4; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split("T")[0];
+        const { data } = await supabase.from("attendance").select("status").eq("date", dateStr);
+        const present = data?.filter((a) => a.status === "Present" || a.status === "Late").length ?? 0;
+        const absent = data?.filter((a) => a.status === "Absent").length ?? 0;
+        result.push({ day: days[d.getDay()], present, absent });
+      }
+      return result;
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Welcome back! Here's what's happening at your school today.
-        </p>
+        <p className="text-muted-foreground text-sm mt-1">Welcome back! Here's what's happening at your school today.</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Students"
-          value="1,248"
-          change="+12 this month"
-          changeType="positive"
-          icon={<Users className="h-5 w-5 text-primary-foreground" />}
-          iconBg="bg-primary"
-        />
-        <StatCard
-          title="Total Teachers"
-          value="86"
-          change="+2 new hires"
-          changeType="positive"
-          icon={<GraduationCap className="h-5 w-5 text-info-foreground" />}
-          iconBg="bg-info"
-        />
-        <StatCard
-          title="Active Classes"
-          value="42"
-          change="All running"
-          changeType="neutral"
-          icon={<School className="h-5 w-5 text-warning-foreground" />}
-          iconBg="bg-warning"
-        />
-        <StatCard
-          title="Attendance Rate"
-          value="94.2%"
-          change="+1.5% vs last week"
-          changeType="positive"
-          icon={<ClipboardCheck className="h-5 w-5 text-success-foreground" />}
-          iconBg="bg-success"
-        />
+        <StatCard title="Total Students" value={studentCount.toLocaleString()} change="Live data" changeType="positive" icon={<Users className="h-5 w-5 text-primary-foreground" />} iconBg="bg-primary" />
+        <StatCard title="Total Teachers" value={teacherCount.toString()} change="Live data" changeType="positive" icon={<GraduationCap className="h-5 w-5 text-info-foreground" />} iconBg="bg-info" />
+        <StatCard title="Active Classes" value={classCount.toString()} change="All running" changeType="neutral" icon={<School className="h-5 w-5 text-warning-foreground" />} iconBg="bg-warning" />
+        <StatCard title="Attendance Rate" value={attendanceRate} change="Today" changeType="positive" icon={<ClipboardCheck className="h-5 w-5 text-success-foreground" />} iconBg="bg-success" />
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Attendance Chart */}
         <div className="col-span-2 rounded-xl border bg-card p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-4">Weekly Attendance</h3>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={attendanceData}>
+            <BarChart data={weeklyAttendance}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 90%)" />
               <XAxis dataKey="day" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
@@ -126,21 +119,11 @@ export default function Dashboard() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Grade Distribution */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-4">Grade Distribution</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
-              <Pie
-                data={gradeDistribution}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={85}
-                paddingAngle={4}
-                dataKey="value"
-              >
+              <Pie data={gradeDistribution} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={4} dataKey="value">
                 {gradeDistribution.map((entry, index) => (
                   <Cell key={index} fill={entry.color} />
                 ))}
@@ -159,9 +142,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Enrollment Trend */}
         <div className="col-span-2 rounded-xl border bg-card p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-4">Enrollment Trend</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -170,26 +151,15 @@ export default function Dashboard() {
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="students"
-                stroke="hsl(172, 66%, 35%)"
-                strokeWidth={2.5}
-                dot={{ fill: "hsl(172, 66%, 35%)", r: 4 }}
-              />
+              <Line type="monotone" dataKey="students" stroke="hsl(172, 66%, 35%)" strokeWidth={2.5} dot={{ fill: "hsl(172, 66%, 35%)", r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Upcoming Events */}
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <h3 className="text-sm font-semibold mb-4">Upcoming Events</h3>
           <div className="space-y-3">
             {upcomingEvents.map((event, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-lg bg-secondary p-3"
-              >
+              <div key={i} className="flex items-center justify-between rounded-lg bg-secondary p-3">
                 <div>
                   <p className="text-sm font-medium">{event.name}</p>
                   <p className="text-xs text-muted-foreground">{event.type}</p>
@@ -198,19 +168,6 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="rounded-xl border bg-card p-5 shadow-sm">
-        <h3 className="text-sm font-semibold mb-4">Recent Activity</h3>
-        <div className="space-y-3">
-          {recentActivities.map((activity, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-              <p className="text-sm">{activity.text}</p>
-              <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">{activity.time}</span>
-            </div>
-          ))}
         </div>
       </div>
     </div>
