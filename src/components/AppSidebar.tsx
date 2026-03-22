@@ -18,6 +18,7 @@ const navItems = [
   { label: "Fees", icon: CreditCard, path: "/fees" },
   { label: "Salaries", icon: DollarSign, path: "/salaries" },
   { label: "ID Cards", icon: IdCard, path: "/id-cards" },
+  { label: "Report Card", icon: FileText, path: "/report-card" },
   { label: "Bus Mgmt", icon: Bus, path: "/bus" },
   { label: "Announcements", icon: MessageSquare, path: "/announcements" },
   { label: "Settings", icon: Settings, path: "/settings" },
