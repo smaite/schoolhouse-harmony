@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Students from "@/pages/Students";
 import Teachers from "@/pages/Teachers";
 import Classes from "@/pages/Classes";
+import Subjects from "@/pages/Subjects";
 import Attendance from "@/pages/Attendance";
 import Gradebook from "@/pages/Gradebook";
 import Schedule from "@/pages/Schedule";
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="/students" element={<Students />} />
               <Route path="/teachers" element={<Teachers />} />
               <Route path="/classes" element={<Classes />} />
+              <Route path="/subjects" element={<Subjects />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/gradebook" element={<Gradebook />} />
               <Route path="/schedule" element={<Schedule />} />

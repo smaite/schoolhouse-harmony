@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Users, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Users, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AddClassDialog } from "@/components/AddClassDialog";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Classes() {
+  const { canCreate } = usePermissions();
+
   const { data: classes = [], isLoading } = useQuery({
     queryKey: ["classes"],
     queryFn: async () => {
@@ -40,7 +43,7 @@ export default function Classes() {
           <h1 className="text-2xl font-bold">Classes</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage classes and sections</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" /> Create Class</Button>
+        {canCreate && <AddClassDialog />}
       </div>
 
       {isLoading ? (
@@ -64,17 +67,17 @@ export default function Classes() {
                     <span>{count} Students</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <BookOpen className="h-4 w-4 text-info" />
+                    <BookOpen className="h-4 w-4 text-primary" />
                     <span>{cls.num_subjects} Subjects</span>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3">{cls.schedule ?? ""}</p>
-                <Button variant="outline" size="sm" className="w-full mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  View Details
-                </Button>
               </div>
             );
           })}
+          {classes.length === 0 && (
+            <div className="col-span-full text-center py-10 text-muted-foreground">No classes yet. Create one to get started.</div>
+          )}
         </div>
       )}
     </div>

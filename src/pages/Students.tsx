@@ -16,9 +16,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
 import { EditStudentDialog } from "@/components/EditStudentDialog";
+import { PromoteStudentsDialog } from "@/components/PromoteStudentsDialog";
+import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 
 export default function Students() {
+  const { canCreate, canEdit, canDelete, viewOnly } = usePermissions();
   const [search, setSearch] = useState("");
   const [filterClass, setFilterClass] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -93,12 +96,15 @@ export default function Students() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">Students</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage all enrolled students</p>
         </div>
-        <AddStudentDialog classes={classes} />
+        <div className="flex gap-2">
+          {canCreate && <PromoteStudentsDialog classes={classes} />}
+          {canCreate && <AddStudentDialog classes={classes} />}
+        </div>
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -123,8 +129,7 @@ export default function Students() {
         </Select>
       </div>
 
-      {/* Bulk actions bar */}
-      {selected.size > 0 && (
+      {selected.size > 0 && !viewOnly && (
         <div className="flex items-center gap-3 rounded-lg border bg-primary/5 p-3">
           <span className="text-sm font-medium">{selected.size} selected</span>
           <Button size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ ids: [...selected], status: "Active" })}>
@@ -148,13 +153,13 @@ export default function Students() {
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-secondary/50">
-                  <th className="p-4 w-10"><Checkbox checked={filtered.length > 0 && selected.size === filtered.length} onCheckedChange={toggleAll} /></th>
+                  {!viewOnly && <th className="p-4 w-10"><Checkbox checked={filtered.length > 0 && selected.size === filtered.length} onCheckedChange={toggleAll} /></th>}
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Student</th>
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Class</th>
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Enrolled</th>
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</th>
                   <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                  {!viewOnly && <th className="text-left p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -162,7 +167,7 @@ export default function Students() {
                   const initials = `${student.first_name[0]}${student.last_name[0]}`;
                   return (
                     <tr key={student.id} className={`border-b last:border-0 hover:bg-secondary/30 transition-colors ${selected.has(student.id) ? "bg-primary/5" : ""}`}>
-                      <td className="p-4"><Checkbox checked={selected.has(student.id)} onCheckedChange={() => toggleSelect(student.id)} /></td>
+                      {!viewOnly && <td className="p-4"><Checkbox checked={selected.has(student.id)} onCheckedChange={() => toggleSelect(student.id)} /></td>}
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">{initials}</div>
@@ -181,34 +186,35 @@ export default function Students() {
                         </div>
                       </td>
                       <td className="p-4"><Badge variant={student.status === "Active" ? "default" : "secondary"}>{student.status}</Badge></td>
-                      <td className="p-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setEditStudent(student)}><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
-                            {student.status !== "Active" ? (
-                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ ids: [student.id], status: "Active" })}><UserCheck className="h-4 w-4 mr-2" /> Mark Active</DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ ids: [student.id], status: "Inactive" })}><UserX className="h-4 w-4 mr-2" /> Mark Inactive</DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ id: student.id, name: `${student.first_name} ${student.last_name}` })}>
-                              <Trash2 className="h-4 w-4 mr-2" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
+                      {!viewOnly && (
+                        <td className="p-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setEditStudent(student)}><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
+                              {student.status !== "Active" ? (
+                                <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ ids: [student.id], status: "Active" })}><UserCheck className="h-4 w-4 mr-2" /> Mark Active</DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ ids: [student.id], status: "Inactive" })}><UserX className="h-4 w-4 mr-2" /> Mark Inactive</DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ id: student.id, name: `${student.first_name} ${student.last_name}` })}>
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
-                {filtered.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No students found</td></tr>}
+                {filtered.length === 0 && <tr><td colSpan={viewOnly ? 6 : 7} className="p-8 text-center text-muted-foreground">No students found</td></tr>}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* Single delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -224,7 +230,6 @@ export default function Students() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bulk delete confirmation */}
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
