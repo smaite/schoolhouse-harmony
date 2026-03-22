@@ -36,7 +36,7 @@ export default function Fees() {
           <h1 className="text-2xl font-bold">Fees</h1>
           <p className="text-sm text-muted-foreground mt-1">Track fee payments and dues</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" /> Record Payment</Button>
+        <RecordPaymentDialog />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
