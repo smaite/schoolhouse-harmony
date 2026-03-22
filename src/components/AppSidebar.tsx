@@ -37,7 +37,7 @@ export function AppSidebar({ collapsed, onToggle }: { collapsed: boolean; onTogg
   return (
     <aside className={cn("fixed left-0 top-0 z-40 flex h-screen flex-col sidebar-gradient border-r border-sidebar-border transition-all duration-300", collapsed ? "w-[68px]" : "w-[240px]")}>
       <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground text-lg">S</div>
+        <img src={logoImg} alt="Schoolers" className="h-9 w-9 shrink-0 rounded-lg object-contain" />
         {!collapsed && (
           <div className="overflow-hidden">
             <h1 className="text-sm font-bold text-sidebar-primary-foreground truncate">Schoolers</h1>
