@@ -7,32 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
-interface Student {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string | null;
-  phone: string | null;
-  class_id: string | null;
-  parent_name: string | null;
-  parent_phone: string | null;
-  status: string;
-  date_of_birth: string | null;
-  gender: string | null;
-  blood_group: string | null;
-  religion: string | null;
-  nationality: string | null;
-  mother_name: string | null;
-  previous_school: string | null;
-  guardian_name: string | null;
-  guardian_phone: string | null;
-  address: string | null;
-}
-
 interface Props {
-  student: Student;
+  student: any;
   classes: { id: string; name: string }[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -57,11 +36,36 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
   const [guardianName, setGuardianName] = useState(student.guardian_name ?? "");
   const [guardianPhone, setGuardianPhone] = useState(student.guardian_phone ?? "");
   const [address, setAddress] = useState(student.address ?? "");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(student.avatar_url ?? null);
   const queryClient = useQueryClient();
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Photo must be under 2MB"); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => { setPhotoFile(null); setPhotoPreview(null); };
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!firstName.trim() || !lastName.trim()) throw new Error("First and last name are required");
+
+      let avatarUrl = student.avatar_url;
+      if (photoFile) {
+        const ext = photoFile.name.split(".").pop();
+        const path = `students/${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from("avatars").upload(path, photoFile);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+        avatarUrl = urlData.publicUrl;
+      } else if (!photoPreview) {
+        avatarUrl = null;
+      }
+
       const { error } = await supabase.from("students").update({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
@@ -81,6 +85,7 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
         guardian_name: guardianName.trim() || null,
         guardian_phone: guardianPhone.trim() || null,
         address: address.trim() || null,
+        avatar_url: avatarUrl,
       }).eq("id", student.id);
       if (error) throw error;
     },
@@ -94,30 +99,56 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh]">
+      <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Edit Student</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="max-h-[70vh] pr-4">
-          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+        <ScrollArea className="max-h-[75vh] pr-4">
+          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="space-y-5 pb-2">
+            {/* Photo Upload */}
+            <div className="flex items-center gap-6">
+              <div className="shrink-0">
+                {photoPreview ? (
+                  <div className="relative">
+                    <img src={photoPreview} alt="Preview" className="h-24 w-24 rounded-xl object-cover border-2 border-primary/20" />
+                    <button type="button" onClick={removePhoto} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="h-24 w-24 rounded-xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                    <Upload className="h-6 w-6 text-muted-foreground mb-1" />
+                    <span className="text-[10px] text-muted-foreground">Photo</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                  </label>
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Student Photo</p>
+                <p>Upload a passport-size photo (max 2MB).</p>
+              </div>
+            </div>
+
+            {/* Name */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>First Name *</Label>
+                <Label>First Name / नाम *</Label>
                 <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label>Last Name *</Label>
+                <Label>Last Name / थर *</Label>
                 <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* DOB & Gender */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Date of Birth</Label>
+                <Label>Date of Birth / जन्म मिति</Label>
                 <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Gender</Label>
+                <Label>Gender / लिङ्ग</Label>
                 <Select value={gender} onValueChange={setGender}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
@@ -129,7 +160,8 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            {/* Blood, Religion, Nationality */}
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Blood Group</Label>
                 <Select value={bloodGroup} onValueChange={setBloodGroup}>
@@ -142,18 +174,19 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Religion</Label>
+                <Label>Religion / धर्म</Label>
                 <Input value={religion} onChange={(e) => setReligion(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Nationality</Label>
+                <Label>Nationality / राष्ट्रियता</Label>
                 <Input value={nationality} onChange={(e) => setNationality(e.target.value)} />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Class & Status */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Class</Label>
+                <Label>Class / कक्षा</Label>
                 <Select value={classId} onValueChange={setClassId}>
                   <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
                   <SelectContent>
@@ -173,25 +206,28 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Contact */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
+                <Label>Phone / फोन</Label>
                 <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
             </div>
 
+            {/* Address */}
             <div className="space-y-2">
-              <Label>Address</Label>
+              <Label>Address / ठेगाना</Label>
               <Input value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Father & Mother */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Father's Name</Label>
+                <Label>Father's Name / बुबाको नाम</Label>
                 <Input value={parentName} onChange={(e) => setParentName(e.target.value)} />
               </div>
               <div className="space-y-2">
@@ -199,15 +235,15 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
                 <Input value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
               </div>
             </div>
-
             <div className="space-y-2">
-              <Label>Mother's Name</Label>
+              <Label>Mother's Name / आमाको नाम</Label>
               <Input value={motherName} onChange={(e) => setMotherName(e.target.value)} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Guardian */}
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Guardian Name</Label>
+                <Label>Guardian Name / संरक्षकको नाम</Label>
                 <Input value={guardianName} onChange={(e) => setGuardianName(e.target.value)} />
               </div>
               <div className="space-y-2">
@@ -216,8 +252,9 @@ export function EditStudentDialog({ student, classes, open, onOpenChange }: Prop
               </div>
             </div>
 
+            {/* Previous School */}
             <div className="space-y-2">
-              <Label>Previous School</Label>
+              <Label>Previous School / पूर्व विद्यालय</Label>
               <Input value={previousSchool} onChange={(e) => setPreviousSchool(e.target.value)} />
             </div>
 
