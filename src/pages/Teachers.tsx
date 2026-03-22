@@ -1,14 +1,23 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Filter, MoreVertical, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AddTeacherDialog } from "@/components/AddTeacherDialog";
+import { toast } from "sonner";
 
 export default function Teachers() {
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: teachers = [], isLoading } = useQuery({
     queryKey: ["teachers"],
@@ -17,6 +26,31 @@ export default function Teachers() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("teachers").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Teacher updated");
+      await queryClient.invalidateQueries({ queryKey: ["teachers"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Failed to update teacher"),
+  });
+
+  const deleteTeacherMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("teachers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Teacher deleted");
+      await queryClient.invalidateQueries({ queryKey: ["teachers"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-teachers"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Failed to delete teacher"),
   });
 
   const filtered = teachers.filter((t) => {
@@ -79,8 +113,36 @@ export default function Teachers() {
                   </div>
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1"><Mail className="h-3.5 w-3.5 mr-1" /> Email</Button>
-                  <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
+                  <Button variant="outline" size="sm" className="flex-1" asChild>
+                    <a href={`mailto:${teacher.email}`}>
+                      <Mail className="h-3.5 w-3.5 mr-1" /> Email
+                    </a>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {teacher.status !== "Active" ? (
+                        <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: teacher.id, status: "Active" })}>
+                          Mark as Active
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: teacher.id, status: "On Leave" })}>
+                          Mark as On Leave
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => deleteTeacherMutation.mutate(teacher.id)}
+                      >
+                        Delete Teacher
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             );

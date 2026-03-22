@@ -1,14 +1,23 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Filter, MoreVertical, Mail, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
+import { toast } from "sonner";
 
 export default function Students() {
   const [search, setSearch] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: classes = [] } = useQuery({
     queryKey: ["classes-list"],
@@ -29,6 +38,31 @@ export default function Students() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("students").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Student updated");
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Failed to update student"),
+  });
+
+  const deleteStudentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("students").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Student deleted");
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-students"] });
+    },
+    onError: (error: any) => toast.error(error.message ?? "Failed to delete student"),
   });
 
   const filtered = students.filter((s) => {
@@ -91,15 +125,43 @@ export default function Students() {
                       <td className="p-4 text-sm text-muted-foreground">{student.enrollment_date}</td>
                       <td className="p-4">
                         <div className="flex gap-2">
-                          <button className="text-muted-foreground hover:text-foreground transition-colors"><Mail className="h-4 w-4" /></button>
-                          <button className="text-muted-foreground hover:text-foreground transition-colors"><Phone className="h-4 w-4" /></button>
+                          <a href={student.email ? `mailto:${student.email}` : undefined} className="text-muted-foreground hover:text-foreground transition-colors" aria-disabled={!student.email}>
+                            <Mail className="h-4 w-4" />
+                          </a>
+                          <a href={student.phone ? `tel:${student.phone}` : undefined} className="text-muted-foreground hover:text-foreground transition-colors" aria-disabled={!student.phone}>
+                            <Phone className="h-4 w-4" />
+                          </a>
                         </div>
                       </td>
                       <td className="p-4">
                         <Badge variant={student.status === "Active" ? "default" : "secondary"}>{student.status}</Badge>
                       </td>
                       <td className="p-4">
-                        <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {student.status !== "Active" ? (
+                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: student.id, status: "Active" })}>
+                                Mark as Active
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: student.id, status: "Inactive" })}>
+                                Mark as Inactive
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => deleteStudentMutation.mutate(student.id)}
+                            >
+                              Delete Student
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   );

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -11,11 +10,11 @@ import {
   MessageSquare,
   Settings,
   ChevronLeft,
-  LogOut,
-  Bell,
   CreditCard,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
@@ -38,6 +37,11 @@ export function AppSidebar({
   onToggle: () => void;
 }) {
   const location = useLocation();
+  const { isAdmin } = useAuth();
+
+  const allNavItems = isAdmin
+    ? [...navItems.slice(0, navItems.length - 1), { label: "Admin Panel", icon: ShieldCheck, path: "/admin" }, navItems[navItems.length - 1]]
+    : navItems;
 
   return (
     <aside
@@ -46,7 +50,6 @@ export function AppSidebar({
         collapsed ? "w-[68px]" : "w-[240px]"
       )}
     >
-      {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground text-lg">
           S
@@ -63,9 +66,8 @@ export function AppSidebar({
         )}
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const active = location.pathname === item.path;
           return (
             <Link
@@ -85,7 +87,6 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* Footer */}
       <div className="border-t border-sidebar-border p-3">
         <button
           onClick={onToggle}
