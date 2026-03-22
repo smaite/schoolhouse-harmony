@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreditCard, DollarSign, AlertCircle, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CreditCard, DollarSign, AlertCircle } from "lucide-react";
+import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { StatCard } from "@/components/StatCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
