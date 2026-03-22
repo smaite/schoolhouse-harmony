@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Filter, MoreVertical, Mail, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
+import { Search, MoreVertical, Mail, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -18,7 +20,11 @@ import { toast } from "sonner";
 
 export default function Teachers() {
   const [search, setSearch] = useState("");
+  const [filterDept, setFilterDept] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [editTeacher, setEditTeacher] = useState<any | null>(null);
   const queryClient = useQueryClient();
 
@@ -31,33 +37,43 @@ export default function Teachers() {
     },
   });
 
+  const departments = [...new Set(teachers.map(t => t.department))].sort();
+
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("teachers").update({ status }).eq("id", id);
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      const { error } = await supabase.from("teachers").update({ status }).in("id", ids);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Status updated"); queryClient.invalidateQueries({ queryKey: ["teachers"] }); },
+    onSuccess: () => { toast.success("Status updated"); queryClient.invalidateQueries({ queryKey: ["teachers"] }); setSelected(new Set()); },
     onError: (e: any) => toast.error(e.message),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("teachers").delete().eq("id", id);
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("teachers").delete().in("id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Teacher deleted");
+      toast.success("Deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["teachers"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-teachers"] });
-      setDeleteTarget(null);
+      setDeleteTarget(null); setBulkDeleteOpen(false); setSelected(new Set());
     },
-    onError: (e: any) => { toast.error(e.message); setDeleteTarget(null); },
+    onError: (e: any) => { toast.error(e.message); setDeleteTarget(null); setBulkDeleteOpen(false); },
   });
 
   const filtered = teachers.filter((t) => {
     const name = `${t.first_name} ${t.last_name}`.toLowerCase();
-    return name.includes(search.toLowerCase()) || t.department.toLowerCase().includes(search.toLowerCase());
+    if (!name.includes(search.toLowerCase()) && !t.department.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterDept !== "all" && t.department !== filterDept) return false;
+    if (filterStatus !== "all" && t.status !== filterStatus) return false;
+    return true;
   });
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
 
   return (
     <div className="space-y-6">
@@ -69,13 +85,45 @@ export default function Teachers() {
         <AddTeacherDialog />
       </div>
 
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search teachers..." className="pl-10 bg-card border" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Button variant="outline"><Filter className="h-4 w-4 mr-2" /> Filter</Button>
+        <Select value={filterDept} onValueChange={setFilterDept}>
+          <SelectTrigger className="w-[170px]"><SelectValue placeholder="Department" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Departments</SelectItem>
+            {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="Active">Active</SelectItem>
+            <SelectItem value="On Leave">On Leave</SelectItem>
+            <SelectItem value="Inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+
+      {/* Bulk actions */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border bg-primary/5 p-3">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <Button size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ ids: [...selected], status: "Active" })}>
+            <UserCheck className="h-3.5 w-3.5 mr-1" /> Active
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ ids: [...selected], status: "On Leave" })}>
+            <UserX className="h-3.5 w-3.5 mr-1" /> On Leave
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => setBulkDeleteOpen(true)}>
+            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-10 text-muted-foreground">Loading teachers...</div>
@@ -85,11 +133,13 @@ export default function Teachers() {
             const initials = `${teacher.first_name[0]}${teacher.last_name[0]}`;
             const joinYear = new Date(teacher.join_date).getFullYear();
             const experience = new Date().getFullYear() - joinYear;
+            const isSelected = selected.has(teacher.id);
             return (
-              <div key={teacher.id} className="rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div key={teacher.id} className={`rounded-xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow ${isSelected ? "ring-2 ring-primary" : ""}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">{initials}</div>
+                    <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(teacher.id)} />
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">{initials}</div>
                     <div>
                       <p className="font-semibold text-sm">{teacher.first_name} {teacher.last_name}</p>
                       <p className="text-xs text-muted-foreground">{teacher.department}</p>
@@ -98,45 +148,25 @@ export default function Teachers() {
                   <Badge variant={teacher.status === "Active" ? "default" : "secondary"}>{teacher.status}</Badge>
                 </div>
                 <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subjects</span>
-                    <span className="font-medium text-right">{teacher.subjects.join(", ")}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Experience</span>
-                    <span className="font-medium">{experience} yrs</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Qualification</span>
-                    <span className="font-medium">{teacher.qualification ?? "—"}</span>
-                  </div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subjects</span><span className="font-medium text-right">{teacher.subjects.join(", ")}</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Experience</span><span className="font-medium">{experience} yrs</span></div>
+                  <div className="flex justify-between text-sm"><span className="text-muted-foreground">Qualification</span><span className="font-medium">{teacher.qualification ?? "—"}</span></div>
                 </div>
                 <div className="mt-4 flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1" asChild>
                     <a href={`mailto:${teacher.email}`}><Mail className="h-3.5 w-3.5 mr-1" /> Email</a>
                   </Button>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditTeacher(teacher)}>
-                        <Pencil className="h-4 w-4 mr-2" /> Edit
-                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setEditTeacher(teacher)}><Pencil className="h-4 w-4 mr-2" /> Edit</DropdownMenuItem>
                       {teacher.status !== "Active" ? (
-                        <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: teacher.id, status: "Active" })}>
-                          <UserCheck className="h-4 w-4 mr-2" /> Mark Active
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ ids: [teacher.id], status: "Active" })}><UserCheck className="h-4 w-4 mr-2" /> Mark Active</DropdownMenuItem>
                       ) : (
-                        <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: teacher.id, status: "On Leave" })}>
-                          <UserX className="h-4 w-4 mr-2" /> Mark On Leave
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ ids: [teacher.id], status: "On Leave" })}><UserX className="h-4 w-4 mr-2" /> Mark On Leave</DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setDeleteTarget({ id: teacher.id, name: `${teacher.first_name} ${teacher.last_name}` })}
-                      >
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget({ id: teacher.id, name: `${teacher.first_name} ${teacher.last_name}` })}>
                         <Trash2 className="h-4 w-4 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -145,42 +175,35 @@ export default function Teachers() {
               </div>
             );
           })}
-          {filtered.length === 0 && (
-            <div className="col-span-full text-center py-10 text-muted-foreground">No teachers found</div>
-          )}
+          {filtered.length === 0 && <div className="col-span-full text-center py-10 text-muted-foreground">No teachers found</div>}
         </div>
       )}
 
-      {/* Delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Teacher</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Delete Teacher</AlertDialogTitle><AlertDialogDescription>Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-              disabled={deleteMutation.isPending}
-            >
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteTarget && deleteMutation.mutate([deleteTarget.id])} disabled={deleteMutation.isPending}>
               {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit dialog */}
-      {editTeacher && (
-        <EditTeacherDialog
-          teacher={editTeacher}
-          open={!!editTeacher}
-          onOpenChange={(open) => !open && setEditTeacher(null)}
-        />
-      )}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Delete {selected.size} Teachers</AlertDialogTitle><AlertDialogDescription>This will permanently delete {selected.size} selected teachers.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteMutation.mutate([...selected])} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Deleting..." : `Delete ${selected.size} Teachers`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {editTeacher && <EditTeacherDialog teacher={editTeacher} open={!!editTeacher} onOpenChange={(open) => !open && setEditTeacher(null)} />}
     </div>
   );
 }
