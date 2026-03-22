@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CreditCard, DollarSign, AlertCircle } from "lucide-react";
+import { CreditCard, Banknote, AlertCircle } from "lucide-react";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { StatCard } from "@/components/StatCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,6 +11,10 @@ const statusVariant: Record<string, string> = {
   Unpaid: "bg-muted text-muted-foreground",
   Overdue: "bg-destructive/10 text-destructive",
 };
+
+function formatNPR(amount: number) {
+  return `रू ${amount.toLocaleString("en-NP")}`;
+}
 
 export default function Fees() {
   const { data: fees = [], isLoading } = useQuery({
@@ -40,8 +44,8 @@ export default function Fees() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Total Collected" value={`$${totalCollected.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-success" />} iconBg="bg-success/10" change="Live data" changeType="positive" />
-        <StatCard title="Pending Amount" value={`$${totalPending.toLocaleString()}`} icon={<CreditCard className="h-5 w-5 text-warning" />} iconBg="bg-warning/10" change={`${fees.filter(f => f.status !== "Paid").length} invoices`} changeType="negative" />
+        <StatCard title="Total Collected" value={formatNPR(totalCollected)} icon={<Banknote className="h-5 w-5 text-success" />} iconBg="bg-success/10" change="Live data" changeType="positive" />
+        <StatCard title="Pending Amount" value={formatNPR(totalPending)} icon={<CreditCard className="h-5 w-5 text-warning" />} iconBg="bg-warning/10" change={`${fees.filter(f => f.status !== "Paid").length} invoices`} changeType="negative" />
         <StatCard title="Overdue Invoices" value={overdueCount.toString()} icon={<AlertCircle className="h-5 w-5 text-destructive" />} iconBg="bg-destructive/10" change="Needs attention" changeType="negative" />
       </div>
 
@@ -71,8 +75,8 @@ export default function Fees() {
                     <TableCell className="font-medium">{name}</TableCell>
                     <TableCell>{className}</TableCell>
                     <TableCell>{fee.fee_type}</TableCell>
-                    <TableCell className="text-right">${Number(fee.amount).toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${Number(fee.paid).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{formatNPR(Number(fee.amount))}</TableCell>
+                    <TableCell className="text-right">{formatNPR(Number(fee.paid))}</TableCell>
                     <TableCell>
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusVariant[fee.status] ?? ""}`}>
                         {fee.status}
