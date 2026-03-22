@@ -1,13 +1,23 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Plus, Filter, MoreVertical, Mail, Phone } from "lucide-react";
+import { Search, Filter, MoreVertical, Mail, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AddStudentDialog } from "@/components/AddStudentDialog";
 
 export default function Students() {
   const [search, setSearch] = useState("");
+
+  const { data: classes = [] } = useQuery({
+    queryKey: ["classes-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("classes").select("id, name").order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students"],
@@ -34,7 +44,7 @@ export default function Students() {
           <h1 className="text-2xl font-bold">Students</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage all enrolled students</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" /> Add Student</Button>
+        <AddStudentDialog classes={classes} />
       </div>
 
       <div className="flex gap-3">
@@ -94,6 +104,9 @@ export default function Students() {
                     </tr>
                   );
                 })}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No students found</td></tr>
+                )}
               </tbody>
             </table>
           </div>

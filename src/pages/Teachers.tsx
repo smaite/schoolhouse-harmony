@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Plus, Filter, MoreVertical, Mail, Star } from "lucide-react";
+import { Search, Filter, MoreVertical, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AddTeacherDialog } from "@/components/AddTeacherDialog";
 
 export default function Teachers() {
   const [search, setSearch] = useState("");
@@ -30,7 +31,7 @@ export default function Teachers() {
           <h1 className="text-2xl font-bold">Teachers</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage faculty and staff</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" /> Add Teacher</Button>
+        <AddTeacherDialog />
       </div>
 
       <div className="flex gap-3">
@@ -84,6 +85,9 @@ export default function Teachers() {
               </div>
             );
           })}
+          {filtered.length === 0 && (
+            <div className="col-span-full text-center py-10 text-muted-foreground">No teachers found</div>
+          )}
         </div>
       )}
     </div>
