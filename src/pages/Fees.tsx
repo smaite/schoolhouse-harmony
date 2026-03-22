@@ -39,9 +39,9 @@ export default function Fees() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Total Collected" value={`$${totalCollected.toLocaleString()}`} icon={DollarSign} trend={{ value: 12, positive: true }} />
-        <StatCard title="Pending Amount" value={`$${totalPending.toLocaleString()}`} icon={CreditCard} trend={{ value: 5, positive: false }} />
-        <StatCard title="Overdue Invoices" value={overdueCount.toString()} icon={AlertCircle} trend={{ value: 2, positive: false }} />
+        <StatCard title="Total Collected" value={`$${totalCollected.toLocaleString()}`} icon={<DollarSign className="h-5 w-5 text-success" />} iconBg="bg-success/10" change="+12% from last month" changeType="positive" />
+        <StatCard title="Pending Amount" value={`$${totalPending.toLocaleString()}`} icon={<CreditCard className="h-5 w-5 text-warning" />} iconBg="bg-warning/10" change="5 invoices pending" changeType="negative" />
+        <StatCard title="Overdue Invoices" value={overdueCount.toString()} icon={<AlertCircle className="h-5 w-5 text-destructive" />} iconBg="bg-destructive/10" change="Needs attention" changeType="negative" />
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm">
