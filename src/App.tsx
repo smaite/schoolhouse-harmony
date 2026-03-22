@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,6 +17,7 @@ import Schedule from "@/pages/Schedule";
 import Fees from "@/pages/Fees";
 import Announcements from "@/pages/Announcements";
 import Settings from "@/pages/Settings";
+import AdminPanel from "@/pages/AdminPanel";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -25,6 +27,13 @@ function ProtectedRoutes() {
   if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>;
   if (!session) return <Navigate to="/auth" replace />;
   return <AppLayout />;
+}
+
+function AdminOnlyRoute({ children }: { children: ReactNode }) {
+  const { isAdmin, loading } = useAuth();
+  if (loading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading...</div>;
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
 }
 
 function AuthRoute() {
@@ -54,6 +63,14 @@ const App = () => (
               <Route path="/fees" element={<Fees />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/settings" element={<Settings />} />
+              <Route
+                path="/admin"
+                element={(
+                  <AdminOnlyRoute>
+                    <AdminPanel />
+                  </AdminOnlyRoute>
+                )}
+              />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
