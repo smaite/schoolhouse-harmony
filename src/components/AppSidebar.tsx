@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, GraduationCap, ClipboardCheck, BookOpen, School,
   Calendar, MessageSquare, Settings, ChevronLeft, CreditCard, ShieldCheck,
-  DollarSign, CreditCard as IdCard, Bus,
+  DollarSign, CreditCard as IdCard, Bus, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ const navItems = [
   { label: "Fees", icon: CreditCard, path: "/fees" },
   { label: "Salaries", icon: DollarSign, path: "/salaries" },
   { label: "ID Cards", icon: IdCard, path: "/id-cards" },
+  { label: "Report Card", icon: FileText, path: "/report-card" },
   { label: "Bus Mgmt", icon: Bus, path: "/bus" },
   { label: "Announcements", icon: MessageSquare, path: "/announcements" },
   { label: "Settings", icon: Settings, path: "/settings" },

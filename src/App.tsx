@@ -18,6 +18,7 @@ import Fees from "@/pages/Fees";
 import Salaries from "@/pages/Salaries";
 import Announcements from "@/pages/Announcements";
 import IDCards from "@/pages/IDCards";
+import ReportCard from "@/pages/ReportCard";
 import BusManagement from "@/pages/BusManagement";
 import Settings from "@/pages/Settings";
 import AdminPanel from "@/pages/AdminPanel";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/salaries" element={<Salaries />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/id-cards" element={<IDCards />} />
+              <Route path="/report-card" element={<ReportCard />} />
               <Route path="/bus" element={<BusManagement />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/admin" element={<AdminOnlyRoute><AdminPanel /></AdminOnlyRoute>} />
