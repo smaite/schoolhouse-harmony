@@ -1,22 +1,25 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Filter, MoreVertical, Mail, Phone } from "lucide-react";
+import { Search, Filter, MoreVertical, Mail, Phone, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AddStudentDialog } from "@/components/AddStudentDialog";
+import { EditStudentDialog } from "@/components/EditStudentDialog";
 import { toast } from "sonner";
 
 export default function Students() {
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [editStudent, setEditStudent] = useState<any | null>(null);
   const queryClient = useQueryClient();
 
   const { data: classes = [] } = useQuery({
@@ -31,10 +34,7 @@ export default function Students() {
   const { data: students = [], isLoading } = useQuery({
     queryKey: ["students"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("students")
-        .select("*, classes(name)")
-        .order("first_name");
+      const { data, error } = await supabase.from("students").select("*, classes(name)").order("first_name");
       if (error) throw error;
       return data;
     },
@@ -45,24 +45,22 @@ export default function Students() {
       const { error } = await supabase.from("students").update({ status }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: async () => {
-      toast.success("Student updated");
-      await queryClient.invalidateQueries({ queryKey: ["students"] });
-    },
-    onError: (error: any) => toast.error(error.message ?? "Failed to update student"),
+    onSuccess: () => { toast.success("Status updated"); queryClient.invalidateQueries({ queryKey: ["students"] }); },
+    onError: (e: any) => toast.error(e.message),
   });
 
-  const deleteStudentMutation = useMutation({
+  const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("students").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast.success("Student deleted");
-      await queryClient.invalidateQueries({ queryKey: ["students"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-students"] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-students"] });
+      setDeleteTarget(null);
     },
-    onError: (error: any) => toast.error(error.message ?? "Failed to delete student"),
+    onError: (e: any) => { toast.error(e.message); setDeleteTarget(null); },
   });
 
   const filtered = students.filter((s) => {
@@ -112,9 +110,7 @@ export default function Students() {
                     <tr key={student.id} className="border-b last:border-0 hover:bg-secondary/30 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
-                            {initials}
-                          </div>
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">{initials}</div>
                           <div>
                             <p className="text-sm font-medium">{student.first_name} {student.last_name}</p>
                             <p className="text-xs text-muted-foreground">{student.email}</p>
@@ -125,12 +121,8 @@ export default function Students() {
                       <td className="p-4 text-sm text-muted-foreground">{student.enrollment_date}</td>
                       <td className="p-4">
                         <div className="flex gap-2">
-                          <a href={student.email ? `mailto:${student.email}` : undefined} className="text-muted-foreground hover:text-foreground transition-colors" aria-disabled={!student.email}>
-                            <Mail className="h-4 w-4" />
-                          </a>
-                          <a href={student.phone ? `tel:${student.phone}` : undefined} className="text-muted-foreground hover:text-foreground transition-colors" aria-disabled={!student.phone}>
-                            <Phone className="h-4 w-4" />
-                          </a>
+                          {student.email && <a href={`mailto:${student.email}`} className="text-muted-foreground hover:text-foreground transition-colors"><Mail className="h-4 w-4" /></a>}
+                          {student.phone && <a href={`tel:${student.phone}`} className="text-muted-foreground hover:text-foreground transition-colors"><Phone className="h-4 w-4" /></a>}
                         </div>
                       </td>
                       <td className="p-4">
@@ -139,26 +131,27 @@ export default function Students() {
                       <td className="p-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
+                            <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setEditStudent(student)}>
+                              <Pencil className="h-4 w-4 mr-2" /> Edit
+                            </DropdownMenuItem>
                             {student.status !== "Active" ? (
                               <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: student.id, status: "Active" })}>
-                                Mark as Active
+                                <UserCheck className="h-4 w-4 mr-2" /> Mark Active
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ id: student.id, status: "Inactive" })}>
-                                Mark as Inactive
+                                <UserX className="h-4 w-4 mr-2" /> Mark Inactive
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
-                              onClick={() => deleteStudentMutation.mutate(student.id)}
+                              onClick={() => setDeleteTarget({ id: student.id, name: `${student.first_name} ${student.last_name}` })}
                             >
-                              Delete Student
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -173,6 +166,38 @@ export default function Students() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone and will remove all associated records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit dialog */}
+      {editStudent && (
+        <EditStudentDialog
+          student={editStudent}
+          classes={classes}
+          open={!!editStudent}
+          onOpenChange={(open) => !open && setEditStudent(null)}
+        />
       )}
     </div>
   );
