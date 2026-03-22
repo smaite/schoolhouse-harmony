@@ -427,46 +427,73 @@ export type Database = {
         Row: {
           address: string | null
           avatar_url: string | null
+          blood_group: string | null
           class_id: string | null
           created_at: string
+          date_of_birth: string | null
           email: string | null
           enrollment_date: string
           first_name: string
+          gender: string | null
+          guardian_name: string | null
+          guardian_phone: string | null
           id: string
           last_name: string
+          mother_name: string | null
+          nationality: string | null
           parent_name: string | null
           parent_phone: string | null
           phone: string | null
+          previous_school: string | null
+          religion: string | null
           status: string
         }
         Insert: {
           address?: string | null
           avatar_url?: string | null
+          blood_group?: string | null
           class_id?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           enrollment_date?: string
           first_name: string
+          gender?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
           id?: string
           last_name: string
+          mother_name?: string | null
+          nationality?: string | null
           parent_name?: string | null
           parent_phone?: string | null
           phone?: string | null
+          previous_school?: string | null
+          religion?: string | null
           status?: string
         }
         Update: {
           address?: string | null
           avatar_url?: string | null
+          blood_group?: string | null
           class_id?: string | null
           created_at?: string
+          date_of_birth?: string | null
           email?: string | null
           enrollment_date?: string
           first_name?: string
+          gender?: string | null
+          guardian_name?: string | null
+          guardian_phone?: string | null
           id?: string
           last_name?: string
+          mother_name?: string | null
+          nationality?: string | null
           parent_name?: string | null
           parent_phone?: string | null
           phone?: string | null
+          previous_school?: string | null
+          religion?: string | null
           status?: string
         }
         Relationships: [
